@@ -25,26 +25,27 @@ class PAU(nn.Module):
         return num / den
 
 class PadeTypeActivation(nn.Module):
-    def __init__(self, L=5, M=2, d_param = None ):
+    def __init__(self, L=3, M=2):
+        #L-M = 0 or 1
         super(PadeTypeActivation, self).__init__()
         self.L = L
         self.M = M
-    
         self.c = nn.Parameter(torch.randn(L + 1)) # i = 0,..L
         
-        # Choose Hermite polynomial degree to ensure denominator degree = M
-        self.H_deg = M // 2 if M % 2 == 0 else (M - 1) // 2  
+        # Choose polynomial degree to ensure denominator degree = M
+        self.degree = M // 2 if M % 2 == 0 else (M - 1) // 2  
+        self.polynomial_coeff = np.random.rand(self.degree)
 
-    def Hermite_Polynomial(self, u):
-        u_np = u.detach().cpu().numpy()
-        H = hermite.Hermite.basis(self.H_deg)(u_np) 
-        return torch.tensor(H, dtype=u.dtype, device=u.device)
-        
+    def polynomial(self,u):
+        p = 0
+        for i,coef in enumerate(self.polynomial_coeff):
+            p += coef*u**(i+1)
+        return p
+    
     def forward(self, u):
         numerator = sum(self.c[j] * u**j for j in range(self.L + 1))
-        H = self.Hermite_Polynomial(u)
-        denominator = 1 + H**2  #Ensures no real roots
-        return numerator / denominator
+        denominator = 1 + self.polynomial(u)**2  #Ensures no real roots
+        return numerator / torch.tensor(denominator, dtype=u.dtype, device=u.device)
     
 
 class BaseHamiltonianNeuralNetwork(nn.Module):

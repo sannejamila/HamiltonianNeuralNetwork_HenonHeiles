@@ -51,6 +51,9 @@ class HenonHeilesSystem:
             dHdu = torch.tensor([x+2*lam*x*y,y+lam*(x**2-y**2),px,py])
         return dHdu
     
+
+        
+    
     def initial_condition(self, H0=None):
         """Function for sampling initial conditions. Callabale taking
             a numpy random generator as input and returning an ndarray
