@@ -4,6 +4,7 @@ import torch.nn as nn
 import numpy.polynomial.hermite as hermite
 from numerical_integration import *
 
+torch.set_default_dtype(torch.float64)
 
 class Sin(nn.Module):
     @staticmethod
@@ -86,7 +87,7 @@ class PseudoHamiltonianNeuralNetwork(nn.Module):
     def __init__(self, nstates, S, Hamiltonian_True=None, Hamiltonian_Grad=None,Hamiltonian_estimated=None, initial_condition_sampler=None,**kwargs):
         super(PseudoHamiltonianNeuralNetwork,self).__init__()
      
-        self.S = torch.tensor(S,dtype=torch.float32)
+        self.S = torch.tensor(S,dtype=torch.float64)
         self.Hamiltonian = None
         self.nstates = nstates
         self.Hamiltonian_True = Hamiltonian_True
@@ -155,14 +156,14 @@ class PseudoHamiltonianNeuralNetwork(nn.Module):
             dudt = symplectic_euler(self.u_dot,u_start,dt = dt)
         return dudt
     
-    def simulate_trajectory(self,integrator,t_sample,dt,u0=None,H0=None):
+    def simulate_trajectory(self,integrator,t_sample,dt,u0=None):
         if u0 is None:
-            u0 = self.initial_condition_sampler(H0)
+            u0 = self.initial_condition_sampler()
         #Reshaping
-        u0 = torch.tensor(u0,dtype = torch.float32)
+        u0 = torch.tensor(u0,dtype = torch.float64)
         u0 = u0.reshape(1,u0.shape[-1])
 
-        t_sample = torch.tensor(t_sample,dtype = torch.float32)
+        t_sample = torch.tensor(t_sample,dtype = torch.float64)
         t_shape = t_sample.shape[-1]
 
         #Initializing solution 
@@ -182,9 +183,9 @@ class PseudoHamiltonianNeuralNetwork(nn.Module):
             u0s = self.initial_condition_sampler(ntrajectories)
         
         #Reshaping
-        u0s = torch.tensor(u0s,dtype = torch.float32)
+        u0s = torch.tensor(u0s,dtype = torch.float64)
         u0s = u0s.reshape(ntrajectories, self.nstates)
-        t_sample = torch.tensor(t_sample,dtype = torch.float32)
+        t_sample = torch.tensor(t_sample,dtype = torch.float64)
         if len(t_sample.shape) == 1:
                 #Reshaping time
                 t_sample = np.tile(t_sample, (ntrajectories, 1))

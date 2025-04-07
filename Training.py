@@ -5,8 +5,8 @@ from tqdm import trange
 import datetime
 
 
-def save_model(epochs, model, loss,act1,act2, integrator):
-    path = f"Models/{integrator}_{epochs}epoch_{act1}_{act2}.pt"
+def save_model(epochs, model, loss,act1,act2, integrator, sys):
+    path = f"Models/{sys}_{integrator}_{epochs}epoch_{act1}_{act2}.pt"
     torch.save({
             'epoch': epochs,
             'model': model,
@@ -91,7 +91,7 @@ def compute_validation_loss(model, integrator, val_data, valdata_batched, loss_f
     return float(val_loss.detach().numpy())
     
 
-def train(model,integrator, train_data,val_data, optimizer,shuffle,loss_func=torch.nn.MSELoss(),batch_size=32,epochs = 20, verbose =True):
+def train(model,integrator, train_data,val_data, optimizer,shuffle,loss_func=torch.nn.MSELoss(),batch_size=32,epochs = 20, verbose =True, name_sys = "Kepler"):
     """
     traindata : tuple((x_start, x_end, t_start, t_end, dt, u), dxdt)
     optimizer : torch optimizer"""
@@ -145,7 +145,7 @@ def train(model,integrator, train_data,val_data, optimizer,shuffle,loss_func=tor
 
 
     #Saving model
-    save_model(epochs, model, loss_list,model.act1,model.act2,integrator)
+    save_model(epochs, model, loss_list,model.act1,model.act2,integrator, sys = name_sys)
     return model,trainingdetails
 
             
