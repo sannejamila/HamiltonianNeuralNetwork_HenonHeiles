@@ -125,7 +125,7 @@ class KeplerSystem:
     
 
 def generate_data(ntrajectories, t_sample,system= KeplerSystem(),integrator = "RK4",true_derivatives = False,H0=None,u0s=None):
-    data_type = torch.float64
+    data_type = torch.float32
     #Parameters
     nstates = system.nstates
     traj_length = t_sample.shape[0] 

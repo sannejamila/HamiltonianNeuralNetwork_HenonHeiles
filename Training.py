@@ -91,7 +91,7 @@ def compute_validation_loss(model, integrator, val_data, valdata_batched, loss_f
     return float(val_loss.detach().numpy())
     
 
-def train(model,integrator, train_data,val_data, optimizer,shuffle,loss_func=torch.nn.MSELoss(),batch_size=32,epochs = 20, verbose =True, name_sys = "Kepler"):
+def train(model,integrator, train_data,val_data, optimizer,shuffle,loss_func=torch.nn.MSELoss(),batch_size=1024,epochs = 20, verbose =True, name_sys = "Kepler"):
     """
     traindata : tuple((x_start, x_end, t_start, t_end, dt, u), dxdt)
     optimizer : torch optimizer"""
@@ -99,6 +99,8 @@ def train(model,integrator, train_data,val_data, optimizer,shuffle,loss_func=tor
     trainingdetails={}
     train_batch = Batch_Data(train_data, batch_size, shuffle)
     valdata_batched = Batch_Data(val_data, batch_size, False)
+    print("Batch data len: ", len(train_batch))
+    print("Batch data shape: ", train_batch[0][0][0].shape)
 
     if optimizer is None:
         optimizer = torch.optim.Adam(model.parameters(), lr=1e-3, weight_decay=1e-4)
@@ -110,6 +112,8 @@ def train(model,integrator, train_data,val_data, optimizer,shuffle,loss_func=tor
         for epoch in steps:
             if shuffle:
                 train_batch = Batch_Data(train_data,batch_size,shuffle)
+            print("Batch data epoch len: ", len(train_batch))
+            print("Batch data shape: ", train_batch[0][0][0].shape)
             model.train(True) 
             start = datetime.datetime.now() 
             avg_loss = train_one_epoch(model,train_batch,loss_func,optimizer,integrator)
