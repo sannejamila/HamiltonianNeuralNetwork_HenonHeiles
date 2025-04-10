@@ -12,6 +12,7 @@ class HenonHeilesSystem:
         self.S = np.array([[0.,0.,1.,0.],[0.,0.,0.,1.],[-1.,0.,0.,0.],[0.,-1.,0.,0.]])
         self.seed = seed
         self.rng = np.random.default_rng(seed)
+        self.name_system = "HenonHeiles"
 
 
     def Hamiltonian(self,u):

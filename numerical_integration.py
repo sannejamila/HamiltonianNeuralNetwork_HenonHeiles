@@ -1,10 +1,13 @@
 import numpy as np
 import torch
 from scipy.optimize import newton
+from tqdm import tqdm
 
-def newton_torch(func, guess, threshold=1e-7, max_iters=1000, damping=1.0):
+
+def newton_torch(func, guess, threshold=1e-7, max_iters=100, damping=1.0):
     guess = torch.tensor(guess, dtype=torch.float32, requires_grad=True)
     for i in range(max_iters):
+    #for i in tqdm(range(max_iters)):
         value = func(guess) 
         if torch.linalg.norm(value) < threshold: #Converged
             return guess

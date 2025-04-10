@@ -5,8 +5,8 @@ from tqdm import trange
 import datetime
 
 
-def save_model(epochs, model, loss,act1,act2, integrator, sys):
-    path = f"Models/{sys}_{integrator}_{epochs}epoch_{act1}_{act2}.pt"
+def save_model(epochs, model, loss,act1,act2, batch_size, integrator, sys,shape):
+    path = f"Models/{sys}_{integrator}_{epochs}epoch_{act1}_{act2}_batchsize_{batch_size}_shape_{shape}.pt"
     torch.save({
             'epoch': epochs,
             'model': model,
@@ -71,24 +71,24 @@ def compute_validation_loss(model, integrator, val_data, valdata_batched, loss_f
             #Reshaping
             if n ==1:
                 u_start = u_start.view(-1)
-            u_start = u_start.requires_grad_()
+            #u_start = u_start.requires_grad_()
             dudt = dudt.view(n,m)
         
             dudt_est = model.time_derivative_step(integrator = integrator, u_start = u_start,u_end = u_end,dt = dt)
 
-            val_loss += loss_func(dudt_est, dudt)
+            val_loss += loss_func(dudt_est, dudt).item()
     else:
         (u_start, u_end, t_start, t_end, dt, u_ex), dudt = val_data
         n,m = u_start.shape
         #Reshaping
         if n ==1:
             u_start = u_start.view(-1)
-        u_start = u_start.requires_grad_()
+        #u_start = u_start.requires_grad_()
         dudt = dudt.view(n,m)
         dudt_est = model.time_derivative(integrator, u_start,u_end,dt)
-        val_loss = loss_func(dudt_est, dudt)
+        val_loss = loss_func(dudt_est, dudt).item()
     val_loss = val_loss / len(valdata_batched)
-    return float(val_loss.detach().numpy())
+    return val_loss#.item() #float(val_loss.detach().numpy())
     
 
 def train(model,integrator, train_data,val_data, optimizer,shuffle,loss_func=torch.nn.MSELoss(),batch_size=1024,epochs = 20, verbose =True, name_sys = "Kepler"):
@@ -99,8 +99,6 @@ def train(model,integrator, train_data,val_data, optimizer,shuffle,loss_func=tor
     trainingdetails={}
     train_batch = Batch_Data(train_data, batch_size, shuffle)
     valdata_batched = Batch_Data(val_data, batch_size, False)
-    print("Batch data len: ", len(train_batch))
-    print("Batch data shape: ", train_batch[0][0][0].shape)
 
     if optimizer is None:
         optimizer = torch.optim.Adam(model.parameters(), lr=1e-3, weight_decay=1e-4)
@@ -108,16 +106,18 @@ def train(model,integrator, train_data,val_data, optimizer,shuffle,loss_func=tor
     loss_list = []
     val_loss_list =  []
 
+    print("Batch data epoch len: ", len(train_batch))
+    print("Batch data shape: ", train_batch[0][0][0].shape)
+
     with trange(epochs) as steps:
         for epoch in steps:
             if shuffle:
                 train_batch = Batch_Data(train_data,batch_size,shuffle)
-            print("Batch data epoch len: ", len(train_batch))
-            print("Batch data shape: ", train_batch[0][0][0].shape)
             model.train(True) 
             start = datetime.datetime.now() 
             avg_loss = train_one_epoch(model,train_batch,loss_func,optimizer,integrator)
             end = datetime.datetime.now() 
+            print("Training loss: ",avg_loss)
             loss_list.append(avg_loss)
             model.train(False) 
             if verbose: #Print
@@ -127,6 +127,7 @@ def train(model,integrator, train_data,val_data, optimizer,shuffle,loss_func=tor
                 start = datetime.datetime.now()
                 vloss = compute_validation_loss(model, integrator, val_data, valdata_batched, loss_func)
                 end = datetime.datetime.now()
+                print("Validation loss: ",vloss)
                 val_loss_list.append(vloss)
 
             trainingdetails["epochs"] = epoch + 1
@@ -147,9 +148,10 @@ def train(model,integrator, train_data,val_data, optimizer,shuffle,loss_func=tor
     plt.title('Training Loss')
     plt.show()
 
+    shape_data = (len(train_batch),train_batch[0][0][0].shape)
 
     #Saving model
-    save_model(epochs, model, loss_list,model.act1,model.act2,integrator, sys = name_sys)
+    save_model(epochs, model, loss_list,model.act1,model.act2,batch_size, integrator, sys = name_sys, shape = shape_data)
     return model,trainingdetails
 
             
